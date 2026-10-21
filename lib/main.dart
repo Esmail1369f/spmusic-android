@@ -1,9 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:just_audio_background/just_audio_background.dart';
+import 'package:audio_service/audio_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-void main() => runApp(const SPMusicApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await JustAudioBackground.init(
+    androidNotificationChannelId: 'com.sahareh.spmusic.audio',
+    androidNotificationChannelName: 'SPMusic Playback',
+    androidNotificationOngoing: true,
+  );
+  runApp(const SPMusicApp());
+}
 const gold = Color(0xFFD8B56A);
 const bg = Color(0xFF090A0F);
 const panel = Color(0xFF171821);
@@ -77,7 +87,7 @@ class _PlayerHomeState extends State<PlayerHome> {
       final idx = _songs.indexWhere((s) => s.id == song.id);
       if (idx < 0 || song.uri == null) return;
       await _player.setAudioSource(ConcatenatingAudioSource(
-        children: _songs.map((s) => AudioSource.uri(Uri.parse(s.uri!), tag: s)).toList()), initialIndex: idx);
+        children: _songs.map((s) => AudioSource.uri(Uri.parse(s.uri!), tag: MediaItem(id: s.id.toString(), album: s.album ?? 'موسیقی محلی', title: s.title, artist: s.artist ?? 'خواننده نامشخص'))).toList()), initialIndex: idx);
       await _player.play();
       if (mounted) setState(() => _index = idx);
     } catch (_) {
