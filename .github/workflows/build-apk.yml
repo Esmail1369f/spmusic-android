@@ -1,0 +1,57 @@
+name: Build SPMusic APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'SPMusic_Flutter_Starter.zip'
+      - '.github/workflows/build-apk.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Create Flutter project
+        run: |
+          flutter create --platforms=android --org com.sahereh.spmusic /tmp/spmusic_project
+
+      - name: Extract starter files
+        run: |
+          unzip -o SPMusic_Flutter_Starter.zip -d /tmp/starter
+          cp /tmp/starter/SPMusic_Flutter_Starter/pubspec.yaml /tmp/spmusic_project/pubspec.yaml
+          cp /tmp/starter/SPMusic_Flutter_Starter/lib/main.dart /tmp/spmusic_project/lib/main.dart
+          cp /tmp/starter/SPMusic_Flutter_Starter/android/app/src/main/AndroidManifest.xml /tmp/spmusic_project/android/app/src/main/AndroidManifest.xml
+
+      - name: Get dependencies
+        working-directory: /tmp/spmusic_project
+        run: flutter pub get
+
+      - name: Build release APK
+        working-directory: /tmp/spmusic_project
+        run: flutter build apk --release
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: SPMusic-APK
+          path: /tmp/spmusic_project/build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
