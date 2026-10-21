@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
-import 'package:audio_service/audio_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async {
@@ -67,7 +66,12 @@ class _PlayerHomeState extends State<PlayerHome> {
     try {
       var ok = await _query.permissionsStatus();
       if (!ok) ok = await _query.permissionsRequest();
-      if (!ok) { if (mounted) setState(() { _permissionDenied = true; _loading = false; }); return; }
+      if (!ok) {
+        if (mounted) {
+          setState(() { _permissionDenied = true; _loading = false; });
+        }
+        return;
+      }
       final list = await _query.querySongs(sortType: SongSortType.TITLE,
         orderType: OrderType.ASC_OR_SMALLER, uriType: UriType.EXTERNAL, ignoreCase: true);
       if (!mounted) return;
@@ -113,7 +117,7 @@ class _PlayerHomeState extends State<PlayerHome> {
         Padding(padding: const EdgeInsets.fromLTRB(20, 18, 20, 12), child: Row(children: [
           Container(width: 48, height: 48, decoration: BoxDecoration(borderRadius: BorderRadius.circular(15),
             gradient: const LinearGradient(colors: [Color(0xFFF4DEA5), gold, Color(0xFF795521)]),
-            boxShadow: [BoxShadow(color: gold.withOpacity(.2), blurRadius: 18)]),
+            boxShadow: [BoxShadow(color: gold.withValues(alpha: .2), blurRadius: 18)]),
             child: const Icon(Icons.graphic_eq_rounded, color: Colors.black, size: 29)),
           const SizedBox(width: 12),
           const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -143,7 +147,7 @@ class _PlayerHomeState extends State<PlayerHome> {
             final s = _visible[i]; final playing = active?.id == s.id;
             return Container(margin: const EdgeInsets.only(bottom: 8), decoration: BoxDecoration(
               color: playing ? const Color(0xFF252116) : panel, borderRadius: BorderRadius.circular(17),
-              border: Border.all(color: playing ? gold.withOpacity(.55) : Colors.white.withOpacity(.035))),
+              border: Border.all(color: playing ? gold.withValues(alpha: .55) : Colors.white.withValues(alpha: .035))),
               child: ListTile(onTap: () => _playSong(s),
                 leading: ClipRRect(borderRadius: BorderRadius.circular(12), child: QueryArtworkWidget(id: s.id,
                   type: ArtworkType.AUDIO, artworkWidth: 52, artworkHeight: 52,
@@ -174,7 +178,7 @@ class _PlayerHomeState extends State<PlayerHome> {
     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
     decoration: BoxDecoration(borderRadius: BorderRadius.circular(20),
       gradient: const LinearGradient(colors: [Color(0xFF2D2518), Color(0xFF15151D)]),
-      border: Border.all(color: gold.withOpacity(.35))),
+      border: Border.all(color: gold.withValues(alpha: .35))),
     child: Column(children: [
       Row(children: [
         const Icon(Icons.multitrack_audio_rounded, color: gold, size: 27), const SizedBox(width: 10),
