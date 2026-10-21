@@ -95,8 +95,11 @@ class _PlayerHomeState extends State<PlayerHome> {
       await _player.play();
       if (mounted) setState(() => _index = idx);
     } catch (_) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('پخش این فایل ممکن نیست؛ فایل را بررسی کنید.')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('پخش این فایل ممکن نیست؛ فایل را بررسی کنید.')),
+        );
+      }
     }
   }
   Future<void> _toggleFavorite(SongModel s) async {
