@@ -99,9 +99,18 @@ jobs:
                   gradle.write_text(text)
                   print(f'Aligned Kotlin JVM target to 11 in {gradle}')
           PY
+      - name: Fix generated widget test entry point
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('test/widget_test.dart')
+          if p.exists():
+              s = p.read_text().replace('MyApp()', 'SPMusicApp()')
+              p.write_text(s)
+              print('Updated generated widget test to use SPMusicApp')
+          PY
       - name: Analyze Dart source
         run: flutter analyze
-        continue-on-error: true
       - name: Build debug APK
         run: flutter build apk --debug
       - name: Upload APK artifact
