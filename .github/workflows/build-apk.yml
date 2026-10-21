@@ -45,7 +45,10 @@ jobs:
           import re
           for p in Path('android').rglob('build.gradle*'):
               s = p.read_text()
-              updated = re.sub(r'compileSdk(?:Version)?\s*(?:=\s*)?(?:flutter\.compileSdkVersion|\d+)', 'compileSdkVersion 35', s)
+              if p.suffix == '.kts':
+                  updated = re.sub(r'compileSdk(?:Version)?\s*(?:=\s*)?(?:flutter\.compileSdkVersion|\d+)', 'compileSdk = 35', s)
+              else:
+                  updated = re.sub(r'compileSdk(?:Version)?\s*(?:=\s*)?(?:flutter\.compileSdkVersion|\d+)', 'compileSdkVersion 35', s)
               if updated != s:
                   p.write_text(updated)
                   print(f'Updated compile SDK in {p}')
