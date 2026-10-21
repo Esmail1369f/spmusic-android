@@ -45,7 +45,7 @@ jobs:
               p.write_text(s)
               print(f'Updated JVM target settings in {p}')
           PY
-      - name: Raise Android compile SDK to 36
+      - name: Set Android compile SDK to 36
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -92,7 +92,11 @@ jobs:
               if not gradle.exists() or not manifest.exists():
                   continue
               text = gradle.read_text()
+              # Keep this legacy plugin aligned with the app's compile SDK.
+              text = re.sub(r'compileSdk(?:Version)?\\s*(?:=\\s*)?(?:flutter\\.compileSdkVersion|\\d+)', 'compileSdkVersion 36', text)
               if 'namespace ' in text:
+                  gradle.write_text(text)
+                  print(f'Updated compile SDK in {gradle}')
                   continue
               xml = manifest.read_text()
               match = re.search('package="([^"]+)"', xml)
