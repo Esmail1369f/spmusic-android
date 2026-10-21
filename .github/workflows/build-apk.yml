@@ -53,14 +53,14 @@ jobs:
               if not gradle.exists() or not manifest.exists():
                   continue
               text = gradle.read_text()
-              if re.search(r'\\bnamespace\\s+', text):
+              if 'namespace ' in text:
                   continue
               xml = manifest.read_text()
-              match = re.search(r'<manifest[^>]*\\bpackage=["\\']([^"\\']+)', xml)
+              match = re.search('package="([^"]+)"', xml)
               namespace = match.group(1) if match else 'com.lucasjosino.on_audio_query'
-              text, count = re.subn(r'\\bandroid\\s*\\{', 'android {\\n    namespace "' + namespace + '"', text, count=1)
-              if count != 1:
-                  raise SystemExit(f'Could not patch namespace in {gradle}')
+              if 'android {' not in text:
+                  raise SystemExit(f'Could not find android block in {gradle}')
+              text = text.replace('android {', 'android {\\n    namespace "' + namespace + '"', 1)
               gradle.write_text(text)
               print(f'Added namespace {namespace} to {gradle}')
           PY
