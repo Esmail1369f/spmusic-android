@@ -64,10 +64,14 @@ jobs:
           from pathlib import Path
           p = Path('android/app/src/main/AndroidManifest.xml')
           s = p.read_text()
-          i = s.find('>')
+          import re
           permissions = '    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>\n    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>\n'
           if 'android.permission.READ_MEDIA_AUDIO' not in s:
-              s = s[:i+1] + '\n' + permissions + s[i+1:]
+              match = re.search(r'<manifest\\b[^>]*>', s)
+              if not match:
+                  raise SystemExit('Could not find opening <manifest> tag')
+              i = match.end()
+              s = s[:i] + '\n' + permissions + s[i:]
           p.write_text(s)
           PY
       - name: Resolve packages
@@ -106,16 +110,6 @@ jobs:
                   text += '\n\ntasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {\n    kotlinOptions { jvmTarget = \'11\' }\n}\n'
                   gradle.write_text(text)
                   print(f'Aligned Kotlin JVM target to 11 in {gradle}')
-          PY
-      - name: Fix generated widget test entry point
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path('test/widget_test.dart')
-          if p.exists():
-              s = p.read_text().replace('MyApp()', 'SPMusicApp()')
-              p.write_text(s)
-              print('Updated generated widget test to use SPMusicApp')
           PY
       - name: Analyze Dart source
         run: flutter analyze
