@@ -93,7 +93,7 @@ jobs:
                   continue
               text = gradle.read_text()
               # Keep this legacy plugin aligned with the app's compile SDK.
-              text = re.sub(r'compileSdk(?:Version)?\\s*(?:=\\s*)?(?:flutter\\.compileSdkVersion|\\d+)', 'compileSdkVersion 36', text)
+              text = re.sub(r'compileSdk(?:Version)?\s*(?:=\s*)?(?:flutter\.compileSdkVersion|\d+)', 'compileSdkVersion 36', text)
               if 'namespace ' in text:
                   gradle.write_text(text)
                   print(f'Updated compile SDK in {gradle}')
