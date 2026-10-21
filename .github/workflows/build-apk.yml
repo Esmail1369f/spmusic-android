@@ -25,6 +25,8 @@ jobs:
           cache: true
       - name: Generate Android platform files
         run: flutter create . --platforms=android --org com.sahareh.spmusic --project-name spmusic
+      - name: Disable incompatible Android Gradle DSL
+        run: echo 'android.newDsl=false' >> android/gradle.properties
       - name: Add audio permissions
         run: |
           python3 - <<'PY'
