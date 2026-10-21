@@ -31,7 +31,9 @@ jobs:
           # while this project uses SPMusicApp and needs no template test.
           rm -f test/widget_test.dart
       - name: Disable incompatible Android Gradle DSL
-        run: echo 'android.newDsl=false' >> android/gradle.properties
+        run: |
+          echo 'android.newDsl=false' >> android/gradle.properties
+          echo 'android.builtInKotlin=false' >> android/gradle.properties
       - name: Align Java and Kotlin JVM targets
         run: |
           python3 - <<'PY'
@@ -67,7 +69,7 @@ jobs:
           import re
           permissions = '    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>\n    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>\n'
           if 'android.permission.READ_MEDIA_AUDIO' not in s:
-              match = re.search(r'<manifest\\b[^>]*>', s)
+              match = re.search(r'<manifest\b[^>]*>', s)
               if not match:
                   raise SystemExit('Could not find opening <manifest> tag')
               i = match.end()
