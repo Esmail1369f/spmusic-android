@@ -62,7 +62,7 @@ jobs:
               namespace = match.group(1) if match else 'com.lucasjosino.on_audio_query'
               if 'android {' not in text:
                   raise SystemExit(f'Could not find android block in {gradle}')
-              text = text.replace('android {', 'android {\\n    namespace "' + namespace + '"', 1)
+              text = text.replace('android {', 'android {\n    namespace "' + namespace + '"', 1)
               gradle.write_text(text)
               print(f'Added namespace {namespace} to {gradle}')
           PY
