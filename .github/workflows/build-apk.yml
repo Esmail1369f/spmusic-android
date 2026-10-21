@@ -39,6 +39,31 @@ jobs:
           PY
       - name: Resolve packages
         run: flutter pub get
+      - name: Patch legacy audio plugin namespace
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          roots = list((Path.home() / '.pub-cache/hosted/pub.dev').glob('on_audio_query_android-*/android'))
+          if not roots:
+              raise SystemExit('on_audio_query_android plugin directory not found')
+          for root in roots:
+              gradle = root / 'build.gradle'
+              manifest = root / 'src/main/AndroidManifest.xml'
+              if not gradle.exists() or not manifest.exists():
+                  continue
+              text = gradle.read_text()
+              if re.search(r'\\bnamespace\\s+', text):
+                  continue
+              xml = manifest.read_text()
+              match = re.search(r'<manifest[^>]*\\bpackage=["\\']([^"\\']+)', xml)
+              namespace = match.group(1) if match else 'com.lucasjosino.on_audio_query'
+              text, count = re.subn(r'\\bandroid\\s*\\{', 'android {\\n    namespace "' + namespace + '"', text, count=1)
+              if count != 1:
+                  raise SystemExit(f'Could not patch namespace in {gradle}')
+              gradle.write_text(text)
+              print(f'Added namespace {namespace} to {gradle}')
+          PY
       - name: Analyze Dart source
         run: flutter analyze
         continue-on-error: true
