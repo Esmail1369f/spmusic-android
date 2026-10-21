@@ -27,6 +27,17 @@ jobs:
         run: flutter create . --platforms=android --org com.sahareh.spmusic --project-name spmusic
       - name: Disable incompatible Android Gradle DSL
         run: echo 'android.newDsl=false' >> android/gradle.properties
+      - name: Align Java and Kotlin JVM targets
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          for p in Path('android/app').glob('build.gradle*'):
+              s = p.read_text()
+              s = s.replace('JavaVersion.VERSION_11', 'JavaVersion.VERSION_17')
+              s = s.replace('VERSION_11', 'VERSION_17')
+              p.write_text(s)
+              print(f'Updated JVM target settings in {p}')
+          PY
       - name: Add audio permissions
         run: |
           python3 - <<'PY'
