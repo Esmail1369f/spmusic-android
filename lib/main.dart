@@ -173,19 +173,35 @@ class _PlayerHomeState extends State<PlayerHome> {
       (!_favoritesOnly || _favorites.contains(s.id))).toList());
   }
   Future<void> _playSong(SongModel song) async {
+    // Ignore stale media-store rows so one invalid URI cannot break the queue.
+    final playable = _songs.where((s) {
+      final raw = s.uri;
+      if (raw == null || raw.trim().isEmpty) return false;
+      final uri = Uri.tryParse(raw);
+      return uri != null && (uri.scheme == 'content' || uri.scheme == 'file') && (s.duration ?? 0) > 0;
+    }).toList();
+    final selected = playable.indexWhere((s) => s.id == song.id);
+    if (selected < 0) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('آدرس این فایل معتبر نیست؛ کتابخانه را دوباره اسکن کنید.')));
+      return;
+    }
     try {
-      final idx = _songs.indexWhere((s) => s.id == song.id);
-      if (idx < 0 || song.uri == null) return;
-      await _player.setAudioSource(ConcatenatingAudioSource(
-        children: _songs.map((s) => AudioSource.uri(Uri.parse(s.uri!), tag: MediaItem(id: s.id.toString(), album: s.album ?? 'موسیقی محلی', title: s.title, artist: s.artist ?? 'خواننده نامشخص'))).toList()), initialIndex: idx);
+      final source = ConcatenatingAudioSource(
+        useLazyPreparation: true,
+        children: playable.map((s) => AudioSource.uri(Uri.parse(s.uri!), tag: MediaItem(
+          id: s.uri!, album: s.album ?? 'موسیقی محلی', title: s.title, artist: s.artist ?? 'خواننده نامشخص',
+        ))).toList(),
+      );
+      await _player.setAudioSource(source, initialIndex: selected);
       await _player.play();
-      if (mounted) setState(() => _index = idx);
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('پخش این فایل ممکن نیست؛ فایل را بررسی کنید.')),
-        );
-      }
+      if (mounted) setState(() => _index = _songs.indexWhere((s) => s.id == song.id));
+    } catch (error, stackTrace) {
+      debugPrint('SPMusic playback failed for ' + song.title + ' (' + song.uri.toString() + '): ' + error.toString());
+      debugPrintStack(stackTrace: stackTrace);
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('پخش «' + song.title + '» ناموفق بود: ' + error.toString(), maxLines: 3, overflow: TextOverflow.ellipsis),
+        duration: const Duration(seconds: 6),
+      ));
     }
   }
   Future<void> _toggleShuffle() async {
