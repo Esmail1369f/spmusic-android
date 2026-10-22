@@ -154,11 +154,11 @@ jobs:
           PY
       - name: Analyze Dart source
         run: flutter analyze
-      - name: Build debug APK
-        run: flutter build apk --debug
-      - name: Upload APK artifact
+      - name: Build optimized release APKs (one per CPU architecture)
+        run: flutter build apk --release --split-per-abi
+      - name: Upload optimized APKs
         uses: actions/upload-artifact@v4
         with:
-          name: SPMusic-debug-apk
-          path: build/app/outputs/flutter-apk/app-debug.apk
+          name: SPMusic-release-apks
+          path: build/app/outputs/flutter-apk/app-*-release.apk
           if-no-files-found: error
