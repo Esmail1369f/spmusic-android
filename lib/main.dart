@@ -284,7 +284,7 @@ class _PlayerHomeState extends State<PlayerHome> {
           final max = duration.inMilliseconds.toDouble().clamp(1.0, double.infinity).toDouble();
           final value = position.inMilliseconds.toDouble().clamp(0.0, max).toDouble();
           return Column(children: [
-            Slider(value: value, max: max, activeThumbColor: gold, inactiveColor: Colors.white12,
+            Slider(value: value, max: max, activeColor: gold, inactiveColor: Colors.white12,
               onChanged: (v) => _player.seek(Duration(milliseconds: v.round()))),
             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
               Text(_time(position), style: const TextStyle(fontSize: 10, color: Colors.white54)),
@@ -312,7 +312,7 @@ class _SPMusicSettingsState extends State<SPMusicSettings> {
   Future<void> _saveBool(String k, bool v) async { final p = await SharedPreferences.getInstance(); await p.setBool(k,v); }
   Future<void> _saveString(String k, String v) async { final p = await SharedPreferences.getInstance(); await p.setString(k,v); }
   Widget _section(String title, List<Widget> children) => Container(margin: const EdgeInsets.only(bottom: 14), padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: panel, borderRadius: BorderRadius.circular(18), border: Border.all(color: Colors.white10)), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(title, style: const TextStyle(color: gold, fontWeight: FontWeight.bold)), const SizedBox(height: 8), ...children]));
-  Widget _toggle(String title, String subtitle, bool value, ValueChanged<bool> onChanged) => SwitchListTile(contentPadding: EdgeInsets.zero, title: Text(title), subtitle: Text(subtitle, style: const TextStyle(fontSize: 11, color: Colors.white54)), value: value, activeColor: gold, onChanged: onChanged);
+  Widget _toggle(String title, String subtitle, bool value, ValueChanged<bool> onChanged) => SwitchListTile(contentPadding: EdgeInsets.zero, title: Text(title), subtitle: Text(subtitle, style: const TextStyle(fontSize: 11, color: Colors.white54)), value: value, activeTrackColor: gold, onChanged: onChanged);
   Widget _choice(String title, String value, List<String> choices, ValueChanged<String> change) => ListTile(contentPadding: EdgeInsets.zero, title: Text(title), trailing: DropdownButton<String>(value: value, dropdownColor: panel, items: choices.map((v) => DropdownMenuItem(value: v, child: Text(v, style: const TextStyle(fontSize: 13)))).toList(), onChanged: (v) { if (v != null) change(v); }));
   @override Widget build(BuildContext context) => Directionality(textDirection: TextDirection.rtl, child: Scaffold(appBar: AppBar(title: const Text('تنظیمات ساهره پلیر')), body: ListView(padding: const EdgeInsets.all(16), children: [
     _section('ظاهر و جلوه‌ها', [_choice('پروفایل عملکرد', _profile, ['سبک','متعادل','سینمایی'], (v) { setState(() => _profile=v); _saveString('profile',v); }), _choice('انتقال صفحه‌ها', _transition, ['محو نرم','سه‌بعدی','سینمایی طلایی'], (v) { setState(() => _transition=v); _saveString('transition',v); }), _toggle('کاهش حرکت‌ها', 'برای دستگاه‌های ضعیف‌تر', _reduceMotion, (v) { setState(() => _reduceMotion=v); _saveBool('reduce_motion',v); })]),
