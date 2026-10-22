@@ -25,6 +25,41 @@ jobs:
           cache: true
       - name: Generate Android platform files
         run: flutter create . --platforms=android --org com.sahareh.spmusic --project-name spmusic
+      - name: Configure SPMusic launcher icon
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          res = Path('android/app/src/main/res')
+          drawable = res / 'drawable'
+          drawable.mkdir(parents=True, exist_ok=True)
+          icon = drawable / 'spmusic_icon.xml'
+          icon.write_text("""<?xml version="1.0" encoding="utf-8"?>
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="108dp"
+              android:height="108dp"
+              android:viewportWidth="108"
+              android:viewportHeight="108">
+              <path android:fillColor="#090A0F" android:pathData="M0,0h108v108h-108z"/>
+              <path android:strokeColor="#D8B56A" android:strokeWidth="2.5" android:fillColor="#00000000"
+                  android:pathData="M17,54a37,37 0,1 0,74 0a37,37 0,1 0,-74 0"/>
+              <path android:strokeColor="#F4DEA5" android:strokeWidth="4" android:strokeLineCap="round"
+                  android:fillColor="#00000000" android:pathData="M29,51v-5a25,25 0,0 1,50 0v5"/>
+              <path android:fillColor="#D8B56A" android:pathData="M27,49h9v23h-9zM72,49h9v23h-9z"/>
+              <path android:fillColor="#F4DEA5" android:pathData="M43,37h8v34h-8zM55,30h8v41h-8z"/>
+              <path android:fillColor="#D8B56A" android:pathData="M67,42l18,12 -18,12z"/>
+          </vector>
+          """)
+          manifest = Path('android/app/src/main/AndroidManifest.xml')
+          text = manifest.read_text()
+          if 'android:icon=' in text:
+              text = re.sub(r'android:icon="[^"]+"', 'android:icon="@drawable/spmusic_icon"', text, count=1)
+          else:
+              text = re.sub(r'<application\\b', '<application android:icon="@drawable/spmusic_icon"', text, count=1)
+          manifest.write_text(text)
+          print('Configured the SPMusic dark-and-gold launcher icon.')
+          PY
       - name: Remove stale generated widget test
         run: |
           # flutter create generates a template test that references MyApp,
