@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 import 'package:just_audio/just_audio.dart';
@@ -118,6 +119,8 @@ class _PlayerHomeState extends State<PlayerHome> {
   final Set<int> _favorites = {};
   int _index = -1, _tab = 0;
   bool _loading = true, _permissionDenied = false, _favoritesOnly = false;
+  bool _shuffleEnabled = false, _repeatEnabled = false;
+  Timer? _sleepTimer;
   final FocusNode _searchFocus = FocusNode();
   SongModel? get current => _index >= 0 && _index < _songs.length ? _songs[_index] : null;
 
@@ -185,6 +188,46 @@ class _PlayerHomeState extends State<PlayerHome> {
       }
     }
   }
+  Future<void> _toggleShuffle() async {
+    _shuffleEnabled = !_shuffleEnabled;
+    await _player.setShuffleModeEnabled(_shuffleEnabled);
+    if (_shuffleEnabled) await _player.shuffle();
+    if (mounted) setState(() {});
+  }
+  Future<void> _toggleRepeat() async {
+    _repeatEnabled = !_repeatEnabled;
+    await _player.setLoopMode(_repeatEnabled ? LoopMode.all : LoopMode.off);
+    if (mounted) setState(() {});
+  }
+  Future<void> _setSleepTimer() async {
+    final minutes = await showModalBottomSheet<int>(
+      context: context,
+      backgroundColor: panel,
+      builder: (context) => SafeArea(child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          const Text('تایمر خواب', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: gold)),
+          const SizedBox(height: 12),
+          for (final m in [15, 30, 45, 60, 90])
+            ListTile(title: Text('$m دقیقه'), leading: const Icon(Icons.timer_outlined, color: gold),
+              onTap: () => Navigator.pop(context, m)),
+          ListTile(title: const Text('خاموش کردن تایمر'), leading: const Icon(Icons.timer_off, color: Colors.white54),
+            onTap: () => Navigator.pop(context, 0)),
+        ]),
+      )),
+    );
+    if (minutes == null) return;
+    _sleepTimer?.cancel();
+    if (minutes == 0) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تایمر خواب خاموش شد.')));
+      return;
+    }
+    _sleepTimer = Timer(Duration(minutes: minutes), () {
+      _player.pause();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تایمر خواب: پخش متوقف شد.')));
+    });
+    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('پخش پس از $minutes دقیقه متوقف می‌شود.')));
+  }
   Future<void> _toggleFavorite(SongModel s) async {
     setState(() { if (!_favorites.add(s.id)) _favorites.remove(s.id); });
     await _saveFavorites();
@@ -193,7 +236,7 @@ class _PlayerHomeState extends State<PlayerHome> {
     '${d.inMinutes.toString().padLeft(2, '0')}:${(d.inSeconds % 60).toString().padLeft(2, '0')}';
 
   @override
-  void dispose() { _searchFocus.dispose(); _search.dispose(); _player.dispose(); super.dispose(); }
+  void dispose() { _sleepTimer?.cancel(); _searchFocus.dispose(); _search.dispose(); _player.dispose(); super.dispose(); }
 
   @override
   Widget build(BuildContext context) {
@@ -267,7 +310,10 @@ class _PlayerHomeState extends State<PlayerHome> {
       border: Border.all(color: gold.withValues(alpha: .35))),
     child: Column(children: [
       Row(children: [
-        const Icon(Icons.multitrack_audio_rounded, color: gold, size: 27), const SizedBox(width: 10),
+        IconButton(tooltip: 'تایمر خواب', onPressed: _setSleepTimer, icon: const Icon(Icons.timer_outlined, color: gold)),
+        IconButton(tooltip: 'پخش تصادفی', onPressed: _toggleShuffle, icon: Icon(Icons.shuffle_rounded, color: _shuffleEnabled ? gold : Colors.white38)),
+        IconButton(tooltip: 'تکرار همه آهنگ‌ها', onPressed: _toggleRepeat, icon: Icon(Icons.repeat_rounded, color: _repeatEnabled ? gold : Colors.white38)),
+        const SizedBox(width: 4),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(s.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold)),
           Text(s.artist ?? 'خواننده نامشخص', style: const TextStyle(color: Colors.white54, fontSize: 12))])),
