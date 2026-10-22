@@ -196,12 +196,14 @@ class _PlayerHomeState extends State<PlayerHome> {
       await _player.play();
       if (mounted) setState(() => _index = _songs.indexWhere((s) => s.id == song.id));
     } catch (error, stackTrace) {
-      debugPrint('SPMusic playback failed for ' + song.title + ' (' + song.uri.toString() + '): ' + error.toString());
+      debugPrint('SPMusic playback failed for ${song.title} (${song.uri}): $error');
       debugPrintStack(stackTrace: stackTrace);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('پخش «' + song.title + '» ناموفق بود: ' + error.toString(), maxLines: 3, overflow: TextOverflow.ellipsis),
-        duration: const Duration(seconds: 6),
-      ));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('پخش «${song.title}» ناموفق بود: $error', maxLines: 3, overflow: TextOverflow.ellipsis),
+          duration: const Duration(seconds: 6),
+        ));
+      }
     }
   }
   Future<void> _toggleShuffle() async {
