@@ -48,6 +48,7 @@ class _CinematicSplashState extends State<CinematicSplash> with TickerProviderSt
  @override void initState(){super.initState(); _playMusic(); scene.addStatusListener((s){if(s==AnimationStatus.completed)_enter();});}
  Future<void> _playMusic() async {
   try { await intro.setAsset('assets/audio/splash.wav'); if(!music||!mounted)return;
+   await intro.setLoopMode(LoopMode.one);
    await intro.setVolume(0); await intro.play();
    for(var i=1;i<=12&&mounted&&music;i++){await Future<void>.delayed(const Duration(milliseconds:100));await intro.setVolume(i/12*.42);}
    await Future<void>.delayed(const Duration(seconds:7));
