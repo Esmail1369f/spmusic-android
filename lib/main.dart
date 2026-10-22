@@ -6,11 +6,20 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await JustAudioBackground.init(
-    androidNotificationChannelId: 'com.sahareh.spmusic.audio',
-    androidNotificationChannelName: 'SPMusic Playback',
-    androidNotificationOngoing: true,
-  );
+
+  // Never leave Android on Flutter's native splash screen if audio-service
+  // initialization fails or stalls on a device. The UI must still start.
+  try {
+    await JustAudioBackground.init(
+      androidNotificationChannelId: 'com.sahareh.spmusic.audio',
+      androidNotificationChannelName: 'SPMusic Playback',
+      androidNotificationOngoing: true,
+    ).timeout(const Duration(seconds: 5));
+  } catch (error, stackTrace) {
+    debugPrint('SPMusic background audio initialization failed: $error');
+    debugPrintStack(stackTrace: stackTrace);
+  }
+
   runApp(const SPMusicApp());
 }
 const gold = Color(0xFFD8B56A);
