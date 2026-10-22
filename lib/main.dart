@@ -116,8 +116,9 @@ class _PlayerHomeState extends State<PlayerHome> {
   final _search = TextEditingController();
   List<SongModel> _songs = [], _visible = [];
   final Set<int> _favorites = {};
-  int _index = -1;
+  int _index = -1, _tab = 0;
   bool _loading = true, _permissionDenied = false, _favoritesOnly = false;
+  final FocusNode _searchFocus = FocusNode();
   SongModel? get current => _index >= 0 && _index < _songs.length ? _songs[_index] : null;
 
   @override
@@ -157,6 +158,11 @@ class _PlayerHomeState extends State<PlayerHome> {
       if (mounted) setState(() { _loading = false; _permissionDenied = true; });
     }
   }
+  void _selectTab(int tab) {
+    if (tab == 4) { Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SPMusicSettings())); return; }
+    setState(() { _tab = tab; _favoritesOnly = tab == 3; if (tab == 2) { _searchFocus.requestFocus(); } else { _searchFocus.unfocus(); } });
+    _filter(_search.text);
+  }
   void _filter(String value) {
     final q = value.trim().toLowerCase();
     setState(() => _visible = _songs.where((s) =>
@@ -187,7 +193,7 @@ class _PlayerHomeState extends State<PlayerHome> {
     '${d.inMinutes.toString().padLeft(2, '0')}:${(d.inSeconds % 60).toString().padLeft(2, '0')}';
 
   @override
-  void dispose() { _search.dispose(); _player.dispose(); super.dispose(); }
+  void dispose() { _searchFocus.dispose(); _search.dispose(); _player.dispose(); super.dispose(); }
 
   @override
   Widget build(BuildContext context) {
@@ -205,7 +211,7 @@ class _PlayerHomeState extends State<PlayerHome> {
             SizedBox(height: 3), Text('SPMUSIC • LOCAL PLAYER', style: TextStyle(color: gold, fontSize: 10, letterSpacing: 1.4))])),
           IconButton(onPressed: _scan, icon: const Icon(Icons.refresh_rounded, color: gold), tooltip: 'اسکن مجدد')
         ])),
-        Padding(padding: const EdgeInsets.symmetric(horizontal: 18), child: TextField(controller: _search,
+        Padding(padding: const EdgeInsets.symmetric(horizontal: 18), child: TextField(focusNode: _searchFocus, controller: _search,
           onChanged: _filter, decoration: InputDecoration(hintText: 'جست‌وجوی آهنگ یا خواننده...',
             prefixIcon: const Icon(Icons.search_rounded, color: gold), filled: true, fillColor: panel,
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(18), borderSide: BorderSide.none)))),
@@ -245,12 +251,12 @@ class _PlayerHomeState extends State<PlayerHome> {
         if (active != null) _nowPlaying(active),
         Container(padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
           decoration: const BoxDecoration(color: Color(0xFF101117), border: Border(top: BorderSide(color: Colors.white10))),
-          child: const Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-            _NavItem(icon: Icons.home_rounded, label: 'خانه', selected: true),
-            _NavItem(icon: Icons.library_music_rounded, label: 'کتابخانه'),
-            _NavItem(icon: Icons.search_rounded, label: 'جست‌وجو'),
-            _NavItem(icon: Icons.favorite_rounded, label: 'علاقه‌مندی'),
-            _NavItem(icon: Icons.settings_rounded, label: 'تنظیمات')]))
+          child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
+            _NavItem(icon: Icons.home_rounded, label: 'خانه', selected: _tab == 0, onTap: () => _selectTab(0)),
+            _NavItem(icon: Icons.library_music_rounded, label: 'کتابخانه', selected: _tab == 1, onTap: () => _selectTab(1)),
+            _NavItem(icon: Icons.search_rounded, label: 'جست‌وجو', selected: _tab == 2, onTap: () => _selectTab(2)),
+            _NavItem(icon: Icons.favorite_rounded, label: 'علاقه‌مندی', selected: _tab == 3, onTap: () => _selectTab(3)),
+            _NavItem(icon: Icons.settings_rounded, label: 'تنظیمات', onTap: () => _selectTab(4))]))
       ]))));
   }
 
@@ -289,10 +295,29 @@ class _PlayerHomeState extends State<PlayerHome> {
 }
 
 class _NavItem extends StatelessWidget {
-  final IconData icon; final String label; final bool selected;
-  const _NavItem({required this.icon, required this.label, this.selected = false});
-  @override
-  Widget build(BuildContext context) => Column(mainAxisSize: MainAxisSize.min, children: [
-    Icon(icon, color: selected ? gold : Colors.white38, size: 22), const SizedBox(height: 4),
-    Text(label, style: TextStyle(fontSize: 10, color: selected ? gold : Colors.white38))]);
+  final IconData icon; final String label; final bool selected; final VoidCallback? onTap;
+  const _NavItem({required this.icon, required this.label, this.selected = false, this.onTap});
+  @override Widget build(BuildContext context) => InkWell(onTap: onTap, borderRadius: BorderRadius.circular(12), child: Padding(padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5), child: Column(mainAxisSize: MainAxisSize.min, children: [Icon(icon, color: selected ? gold : Colors.white38, size: 22), const SizedBox(height: 4), Text(label, style: TextStyle(fontSize: 10, color: selected ? gold : Colors.white38))])));
+}
+
+class SPMusicSettings extends StatefulWidget {
+  const SPMusicSettings({super.key});
+  @override State<SPMusicSettings> createState() => _SPMusicSettingsState();
+}
+class _SPMusicSettingsState extends State<SPMusicSettings> {
+  bool _reduceMotion = false, _autoScan = true, _resumeHeadphones = false;
+  String _language = 'فارسی', _profile = 'متعادل', _transition = 'سینمایی طلایی';
+  @override void initState() { super.initState(); _load(); }
+  Future<void> _load() async { final p = await SharedPreferences.getInstance(); if (!mounted) return; setState(() { _reduceMotion = p.getBool('reduce_motion') ?? false; _autoScan = p.getBool('auto_scan') ?? true; _resumeHeadphones = p.getBool('resume_headphones') ?? false; _language = p.getString('language') ?? 'فارسی'; _profile = p.getString('profile') ?? 'متعادل'; _transition = p.getString('transition') ?? 'سینمایی طلایی'; }); }
+  Future<void> _saveBool(String k, bool v) async { final p = await SharedPreferences.getInstance(); await p.setBool(k,v); }
+  Future<void> _saveString(String k, String v) async { final p = await SharedPreferences.getInstance(); await p.setString(k,v); }
+  Widget _section(String title, List<Widget> children) => Container(margin: const EdgeInsets.only(bottom: 14), padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: panel, borderRadius: BorderRadius.circular(18), border: Border.all(color: Colors.white10)), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(title, style: const TextStyle(color: gold, fontWeight: FontWeight.bold)), const SizedBox(height: 8), ...children]));
+  Widget _toggle(String title, String subtitle, bool value, ValueChanged<bool> onChanged) => SwitchListTile(contentPadding: EdgeInsets.zero, title: Text(title), subtitle: Text(subtitle, style: const TextStyle(fontSize: 11, color: Colors.white54)), value: value, activeColor: gold, onChanged: onChanged);
+  Widget _choice(String title, String value, List<String> choices, ValueChanged<String> change) => ListTile(contentPadding: EdgeInsets.zero, title: Text(title), trailing: DropdownButton<String>(value: value, dropdownColor: panel, items: choices.map((v) => DropdownMenuItem(value: v, child: Text(v, style: const TextStyle(fontSize: 13)))).toList(), onChanged: (v) { if (v != null) change(v); }));
+  @override Widget build(BuildContext context) => Directionality(textDirection: TextDirection.rtl, child: Scaffold(appBar: AppBar(title: const Text('تنظیمات ساهره پلیر')), body: ListView(padding: const EdgeInsets.all(16), children: [
+    _section('ظاهر و جلوه‌ها', [_choice('پروفایل عملکرد', _profile, ['سبک','متعادل','سینمایی'], (v) { setState(() => _profile=v); _saveString('profile',v); }), _choice('انتقال صفحه‌ها', _transition, ['محو نرم','سه‌بعدی','سینمایی طلایی'], (v) { setState(() => _transition=v); _saveString('transition',v); }), _toggle('کاهش حرکت‌ها', 'برای دستگاه‌های ضعیف‌تر', _reduceMotion, (v) { setState(() => _reduceMotion=v); _saveBool('reduce_motion',v); })]),
+    _section('پخش و کتابخانه', [_toggle('اسکن خودکار', 'ترجیح اسکن کتابخانه', _autoScan, (v) { setState(() => _autoScan=v); _saveBool('auto_scan',v); }), _toggle('ادامه پس از اتصال هدفون', 'ذخیره تنظیم؛ اتصال هدفون هنوز یکپارچه نشده است.', _resumeHeadphones, (v) { setState(() => _resumeHeadphones=v); _saveBool('resume_headphones',v); })]),
+    _section('زبان', [_choice('زبان برنامه', _language, ['فارسی','کوردی سورانی','کوردی کرمانجی','English','العربية'], (v) { setState(() => _language=v); _saveString('language',v); }), const Text('زبان انتخابی ذخیره می‌شود؛ ترجمه کامل همه صفحه‌ها هنوز پیاده‌سازی نشده است.', style: TextStyle(color: Colors.white54, fontSize: 12))]),
+    _section('درباره برنامه', [const ListTile(contentPadding: EdgeInsets.zero, title: Text('ساهره پلیر موزیک • SPMusic'), subtitle: Text('طراح و توسعه‌دهنده: اسماعیل فتاحی')), const ListTile(contentPadding: EdgeInsets.zero, title: Text('روبیکا'), subtitle: Text('@EsmailFatahi1369')), const ListTile(contentPadding: EdgeInsets.zero, title: Text('تلگرام'), subtitle: Text('@Esmailfatahi1369'))])
+  ])));
 }
