@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
-import 'package:audio_service/audio_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async {
@@ -285,7 +284,7 @@ class _PlayerHomeState extends State<PlayerHome> {
           final max = duration.inMilliseconds.toDouble().clamp(1.0, double.infinity).toDouble();
           final value = position.inMilliseconds.toDouble().clamp(0.0, max).toDouble();
           return Column(children: [
-            Slider(value: value, max: max, activeColor: gold, inactiveColor: Colors.white12,
+            Slider(value: value, max: max, activeThumbColor: gold, inactiveColor: Colors.white12,
               onChanged: (v) => _player.seek(Duration(milliseconds: v.round()))),
             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
               Text(_time(position), style: const TextStyle(fontSize: 10, color: Colors.white54)),
